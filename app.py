@@ -8,6 +8,13 @@ import pandas as pd
 import csv
 import json
 import os
+from json2html import *
+import io
+
+try:
+    to_unicode = unicode
+except NameError:
+    to_unicode = str
 
 # app
 app = Flask(__name__)
@@ -21,15 +28,25 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = 0
 columns = ['Date', 'Price', 'Open', 'High', 'Low', "Vol.", "Change %"]
 file_csv = open('BTC_USD-Bitfinex-Historical-Data.csv', 'r')
 reader = csv.DictReader(file_csv, columns)
-file_json = open('affichage.json', 'w')
+file_json = io.open('affichage.json', 'w', encoding='utf-8')
 L = list(reader)
-for i in range(1,len(L)) :
+L = L[1::]
+for i in range(len(L)) :
     del L[i]["Vol."]
     del L[i]["Change %"]
-    json.dump(L[i], file_json, indent=0)
+str_ = json.dumps(L, indent=4, sort_keys=True, separators=(',', ': '), ensure_ascii=False)
+file_json.write(to_unicode(str_))
 
 file_csv.close()
 file_json.close()
+
+file_json_read = open('./affichage.json', 'r')
+with open("affichage.json", encoding='utf-8', errors='ignore') as json_data:
+     data_json = json.load(json_data, strict=False)
+#infoFromJson = json.loads(str(file_json_read))
+#print(json2html.convert(data_json))
+file_html = json2html.convert(data_json)
+file_json_read.close()
 
 #Affiche tout
 #json.dumps(list(csv.reader(open('BTC_USD-Bitfinex-Historical-Data.csv'))))
