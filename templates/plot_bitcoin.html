@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+ <head>
+    <style type="text/css">
+        body {
+          color: rgb(0, 128, 107);
+          background-color: #00ffdd7c }
+    </style>
+    <h1 align="center">Welcome to BITCOINWORLD</h1>
+    <br>
+    <br>
+    <div style="text-align:center;">
+    <h2 align="center">Request 1</h2>
+    <br>
+    <label for="req1"> Date :</label>
+    <input type="date" id="req1">
+    <br> 
+    <br>
+    <h2 align="center">Request 2</h2>
+    <br>
+    <label for="req2"> Date :</label>
+    <input type="date" id="req2">
+    <input type="date" id="req2b">
+    <br>
+    <br> 
+    <label for="req3"> Date :</label>
+    <input type="date" id="req3">
+    <input type="date" id="req3b"> </div>
+ </head>
+ <body>
+  <h1>Graph representing the evolution Bitcoin's price over time</h1>
+  <div id='chart' class='chart'”></div>
+</body>
+<script src='https://cdn.plot.ly/plotly-latest.min.js%27%3E'></script>
+  <script type='text/javascript'>
+    var graphs = {{graphJSON | safe}};
+    Plotly.plot('chart',graphs,{});
+  </script>
+</html>

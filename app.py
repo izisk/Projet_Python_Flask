@@ -10,6 +10,9 @@ import json
 import os
 from json2html import *
 import io
+import plotly
+import plotly.express as px
+
 
 try:
     to_unicode = unicode
@@ -36,20 +39,21 @@ for i in range(len(L)) :
     del L[i]["Change %"]
 str_ = json.dumps(L, indent=4, sort_keys=True, separators=(',', ': '), ensure_ascii=False)
 file_json.write(to_unicode(str_))
-
 file_csv.close()
 file_json.close()
 
+#Filling the HTML file with the JSON data
 file_json_read = open('./affichage.json', 'r')
 with open("affichage.json", encoding='utf-8', errors='ignore') as json_data:
      data_json = json.load(json_data, strict=False)
 #infoFromJson = json.loads(str(file_json_read))
 #print(json2html.convert(data_json))
-file_html = json2html.convert(data_json)
+data_html = json2html.convert(data_json)
+file = open("templates/data_bitcoin.html","w")
+file.write(data_html)
+file.close()
 file_json_read.close()
 
-#Affiche tout
-#json.dumps(list(csv.reader(open('BTC_USD-Bitfinex-Historical-Data.csv'))))
 
 @event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, connection_record):
@@ -71,13 +75,44 @@ class bitcoin(db.Model) :
     High = db.Column(db.Float)
     Low = db.Column(db.Float)
 
-
+# Routes
 @app.route("/")
 def home():
-    return "<h1>API Running</h1>"
-
+    return render_template('home.html')
         
-# routes
+@app.route('/plot_bitcoin')
+def plot_bitcoin():
+    df = pd.read_csv('BTC_USD Bitfinex Historical Data.csv')
+    df = df.drop('Vol.', 1)
+    df = df.drop('Change %', 1)
+    df['Date'] = pd.to_datetime(df['Date'], format='%b %d, %Y')
+    df['Price'] = df['Price'].str.replace(',', '').astype(float)
+    df['Open'] = df['Open'].str.replace(',', '').astype(float)
+    df['High'] = df['High'].str.replace(',', '').astype(float)
+    df['Low'] = df['Low'].str.replace(',', '').astype(float)
+    leplot = px.line(df, x='Date', y='Price', title= 'Evolution du prix du Bitcoin en fonction du temps')
+    graphJSON = json.dumps(leplot, cls=plotly.utils.PlotlyJSONEncoder)
+    #return data_html
+    return render_template('plot_bitcoin.html', graphJSON=graphJSON)
+
+@app.route("/data_bitcoin")
+def data_bitcoin():
+    return data_html
+
+
+
+if __name__ == "__main__":
+    #db.create_all()
+    app.run(debug=False)
+    #with app.test_request_context('/bitcoin', method='POST'):
+    # now you can do something with the request until the
+    # end of the with block, such as basic assertions:
+        #create_bitcoin()
+        #assert request.path == '/bitcoin'
+        #assert request.method == 'POST'
+
+
+'''
 @app.route("/bitcoin", methods=['GET', 'POST'])
 def create_bitcoin():
     try :
@@ -104,53 +139,4 @@ def create_bitcoin():
             return render_template('affichage.json')
     except Exception as e:
         return jsonify({"error": "Failed, caught exception " + str(e)}), 400
-
-if __name__ == "__main__":
-    db.create_all()
-    app.run()
-    with app.test_request_context('/bitcoin', method='POST'):
-    # now you can do something with the request until the
-    # end of the with block, such as basic assertions:
-        create_bitcoin()
-        assert request.path == '/bitcoin'
-        assert request.method == 'POST'
-
-
-'''
-@app.route("/user/descending_id", methods=["GET"])
-def get_all_users_descending():
-    users = User.query.all()
-    all_users_ll = linked_list.LinkedList()
-
-    for user in users:
-        all_users_ll.insert_beginning(
-            {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "address": user.address,
-                "phone": user.phone,
-            }
-        )
-
-    return jsonify(all_users_ll.to_list()), 200
-
-
-@app.route("/user/ascending_id", methods=["GET"])
-def get_all_users_ascending():
-    users = User.query.all()
-    all_users_ll = linked_list.LinkedList()
-
-    for user in users:
-        all_users_ll.insert_at_end(
-            {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "address": user.address,
-                "phone": user.phone,
-            }
-        )
-
-    return jsonify(all_users_ll.to_list()), 200
 '''
