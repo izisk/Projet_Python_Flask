@@ -1,5 +1,6 @@
 from sqlite3 import Connection as SQLite3Connection
 from datetime import datetime
+from sqlite3.dbapi2 import DatabaseError
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from flask import Flask, request, jsonify, render_template
@@ -12,6 +13,9 @@ from json2html import *
 import io
 import plotly
 import plotly.express as px
+from datetime import datetime
+from dateutil import parser
+import numpy as np
 
 
 try:
@@ -82,17 +86,14 @@ def home():
         
 @app.route('/plot_bitcoin')
 def plot_bitcoin():
-    df = pd.read_csv('BTC_USD Bitfinex Historical Data.csv')
-    df = df.drop('Vol.', 1)
-    df = df.drop('Change %', 1)
-    df['Date'] = pd.to_datetime(df['Date'], format='%b %d, %Y')
-    df['Price'] = df['Price'].str.replace(',', '').astype(float)
-    df['Open'] = df['Open'].str.replace(',', '').astype(float)
-    df['High'] = df['High'].str.replace(',', '').astype(float)
-    df['Low'] = df['Low'].str.replace(',', '').astype(float)
-    leplot = px.line(df, x='Date', y='Price', title= 'Evolution du prix du Bitcoin en fonction du temps')
+    DatePrice = []
+    for elem in data_json :
+        DatePrice.append([datetime.strptime(str(elem['Date'][::]), "%b %d, %Y").date(), (float(elem['Price'][::].replace(',', '')))])
+    DP = np.array(DatePrice)
+    print(DP[:,0])
+    leplot = px.line(DP, x= DP[:,0], y= DP[:,1], labels= {'x' : 'Date', 'y' : 'Price'})
+    lep = px.line()
     graphJSON = json.dumps(leplot, cls=plotly.utils.PlotlyJSONEncoder)
-    #return data_html
     return render_template('plot_bitcoin.html', graphJSON=graphJSON)
 
 @app.route("/data_bitcoin")
@@ -104,12 +105,7 @@ def data_bitcoin():
 if __name__ == "__main__":
     #db.create_all()
     app.run(debug=False)
-    #with app.test_request_context('/bitcoin', method='POST'):
-    # now you can do something with the request until the
-    # end of the with block, such as basic assertions:
-        #create_bitcoin()
-        #assert request.path == '/bitcoin'
-        #assert request.method == 'POST'
+    
 
 
 '''
