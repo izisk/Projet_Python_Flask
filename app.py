@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlite3.dbapi2 import DatabaseError
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import csv
@@ -90,16 +90,36 @@ def plot_bitcoin():
     for elem in data_json :
         DatePrice.append([datetime.strptime(str(elem['Date'][::]), "%b %d, %Y").date(), (float(elem['Price'][::].replace(',', '')))])
     DP = np.array(DatePrice)
-    print(DP[:,0])
     leplot = px.line(DP, x= DP[:,0], y= DP[:,1], labels= {'x' : 'Date', 'y' : 'Price'})
     lep = px.line()
     graphJSON = json.dumps(leplot, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template('plot_bitcoin.html', graphJSON=graphJSON)
 
+
+@app.route('/requests', methods= ["POST", "GET"])
+def requests():
+    if request.method == "POST" :
+        date1 = request.form["req1"]
+        return redirect(url_for("date1", don1=date1))
+    else :
+        return render_template("requests.html")
+    
+# My idea for now for the request 1 (where given a date we want to retrieve corresponding Price Open High Low) 
+# is to use a JSON object.
+
+# For the request 2 (where given two dates we want to load all closing prices 
+# for that date range and display the last nth element where n is small) 
+# is to also use the Json object for retreveing the corresponding prices.
+# Then load thoses prices in a a List so that I can sort them fast.
+    
+@app.route('/<don1>')
+def request1(don1):
+    return f"<h1>{don1}</h1>"
+
+
 @app.route("/data_bitcoin")
 def data_bitcoin():
     return data_html
-
 
 
 if __name__ == "__main__":
